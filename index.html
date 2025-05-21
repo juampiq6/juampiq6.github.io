@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JP Quinteros | Mobile Systems Engineer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --green: #4ade80;
+            --dark-green: #1a1a1a;
+            --gray-800: #1f2937;
+            --gray-700: #374151;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--dark-green);
+            color: white;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .text-green {
+            color: var(--green);
+        }
+
+        .card {
+            background: var(--gray-800);
+            border: 1px solid var(--gray-700);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--green);
+        }
+
+        .scroll-container {
+            scroll-snap-type: y mandatory;
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .scroll-container::-webkit-scrollbar-track {
+            background: var(--dark-green);
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: var(--gray-700);
+        }
+
+        section {
+            scroll-snap-align: start;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            background: rgba(74, 222, 128, 0.3);
+            border-radius: 50%;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-dot.active {
+            background: var(--green);
+        }
+
+        .projects-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            height: 100vh;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        @media (min-width: 768px) {
+            .projects-container {
+                flex-direction: row;
+                height: auto;
+                overflow-x: auto;
+                overflow-y: visible;
+                scroll-snap-type: x mandatory;
+                gap: 2rem;
+                padding: 1rem 0;
+            }
+        }
+
+        .project-card {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 768px) {
+            .project-card {
+                scroll-snap-align: center;
+                min-height: auto;
+            }
+        }
+
+        .tech-tag {
+            background: var(--gray-700);
+            color: var(--green);
+            border: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            letter-spacing: -0.025em;
+        }
+
+        .tech-card-neon {
+            box-shadow: 0 2px 24px 0 rgba(74, 222, 128, 0.08);
+            position: relative;
+            cursor: pointer;
+            transition: box-shadow 0.3s, border-color 0.3s, background 0.3s;
+            z-index: 10;
+            min-width: 90px;
+            min-height: 90px;
+            max-width: 100px;
+            max-height: 100px;
+        }
+
+        @media (min-width: 768px) {
+            .tech-card-neon {
+                max-width: 120px;
+                max-height: 120px;
+            }
+        }
+
+        .tech-card-neon .neon-glow {
+            pointer-events: none;
+            opacity: 0;
+            background: radial-gradient(circle at 50% 50%, var(--glow-color) 0%, transparent 70%);
+            filter: blur(20px);
+            transition: opacity 0.4s;
+            z-index: 0;
+        }
+
+        .tech-card-neon:hover .neon-glow,
+        .tech-card-neon.selected .neon-glow {
+            opacity: 0.8;
+            animation: neon-pulse 1s infinite alternate;
+        }
+
+        @keyframes neon-pulse {
+            0% {
+                opacity: 0.3;
+            }
+
+            100% {
+                opacity: 0.7;
+            }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        neon: '#39FF14',
+                        dark: '#1a1a1a'
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sections = document.querySelectorAll('section');
+            const navDots = document.querySelectorAll('.nav-dot');
+            const scrollContainer = document.querySelector('.scroll-container');
+
+            function updateActiveDot() {
+                const scrollPosition = scrollContainer.scrollTop;
+                const windowHeight = window.innerHeight;
+
+                // Find the current section based on scroll position
+                let currentSection = 0;
+                sections.forEach((section, index) => {
+                    const sectionTop = section.offsetTop;
+                    const sectionBottom = sectionTop + section.offsetHeight;
+
+                    if (scrollPosition >= sectionTop - windowHeight / 3 &&
+                        scrollPosition < sectionBottom - windowHeight / 3) {
+                        currentSection = index;
+                    }
+                });
+
+                // Update active dot
+                navDots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentSection);
+                });
+            }
+
+            // Update dots on scroll
+            scrollContainer.addEventListener('scroll', updateActiveDot, { passive: true });
+
+            // Update dots on click
+            navDots.forEach((dot, index) => {
+                dot.addEventListener('click', () => {
+                    sections[index].scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+
+            const techCards = document.querySelectorAll('.tech-card-neon');
+            const techDesc = document.getElementById('tech-desc');
+            let selected = null;
+            techCards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    techCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    const tech = card.getAttribute('data-tech');
+                    techDesc.innerHTML = techDescriptions[tech] || '';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.classList.remove('selected');
+                    if (!selected) {
+                        techDesc.innerHTML = '<span>Selecciona una tecnología</span>';
+                    } else {
+                        techDesc.innerHTML = techDescriptions[selected];
+                        document.querySelector(`.tech-card-neon[data-tech="${selected}"]`).classList.add('selected');
+                    }
+                });
+                card.addEventListener('click', () => {
+                    techCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selected = card.getAttribute('data-tech');
+                    techDesc.innerHTML = techDescriptions[selected];
+                });
+            });
+
+            // Initial update
+            updateActiveDot();
+        });
+
+        const techDescriptions = {
+            flutter: 'Desarrollé apps móviles multiplataforma con Flutter, priorizando rendimiento, animaciones fluidas y diseño pixel-perfect en proyectos fintech',
+            dart: 'Utilicé Dart para estructurar arquitecturas robustas en producción, aplicando BLoC, Riverpod y lógica asincrónica para manejar flujos complejos de datos.',
+            go: 'Desarrollé APIs REST como proyectos personales usando Go, enfocándome en eficiencia, buenas prácticas y comprensión de conceptos backend modernos.',
+            python: 'Usé Python para crear bots, scripts de automatización y scraping web, optimizando tareas repetitivas y facilitando flujos de desarrollo.',
+            js: 'Desarrollé herramientas web complementarias y funcionalidades dinámicas utilizando JavaScript.',
+            docker: 'Dockericé servicios backend para facilitar el despliegue en Google Cloud, integrando entornos reproducibles con pipelines CI/CD eficientes.',
+            linux: 'Configuré entornos Linux para desarrollo y despliegue de backend, gestionando servidores y contenedores con foco en estabilidad y seguridad.',
+            git: 'Lideré flujos de trabajo colaborativos con Git, gestionando ramas, revisiones de código y automatización de CI para equipos de desarrollo mobile.',
+            dotnet: 'Desarrollé APIs REST con .NET Core y Entity Framework, implementando autenticación segura y endpoints conectados a bases de datos relacionales.'
+        };
+
+
+    </script>
+</head>
+
+<body class="bg-dark">
+    <!-- Navigation Dots -->
+    <div class="fixed right-4 top-1/2 transform -translate-y-1/2 z-50 hidden md:block">
+        <div class="nav-dot active" data-section="intro"></div>
+        <div class="nav-dot" data-section="about"></div>
+        <div class="nav-dot" data-section="tech"></div>
+        <div class="nav-dot" data-section="projects"></div>
+        <div class="nav-dot" data-section="contact"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="scroll-container">
+        <!-- Intro Section -->
+        <section id="intro" class="relative px-4 sm:px-6 lg:px-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="card rounded-lg p-6 md:p-8">
+                    <div class="space-y-6">
+                        <div class="space-y-2">
+                            <h1 class="text-2xl md:text-5xl font-bold text-green">
+                                Juan Pablo Quinteros
+                            </h1>
+                            <h2 class="text-m md:text-2xl text-gray-400">
+                                Desarrollador de software mobile, backend y arquitectura de producto
+                            </h2>
+                        </div>
+
+                        <div class="text-sm">
+
+                            <p> Hola 👋, soy Juan Pablo, un Ingeniero en Sistemas apasionado por la tecnología y el
+                                desarrollo de
+                                software.
+                            </p>
+
+                            <p class="mt-2">
+                                He trabajado
+                                en distintos entornos —desde software factories hasta startups— donde tuve la
+                                oportunidad de liderar desarrollos mobile, colaborar en decisiones de arquitectura y
+                                producto, y
+                                participar activamente en todo el ciclo de vida de los productos.
+                            </p>
+
+                            <p class="mt-2">
+                                Mi principal expertise está en Flutter, y también cuento con conocimientos
+                                backend (.NET Core, GoLang).
+                            </p>
+                            <p class="mt-2">A lo largo de
+                                mi carrera, siempre prioricé la mejora continua: tanto en lo técnico (optimizaciones,
+                                buenas prácticas, CI/CD, performance) como en lo humano, apostando a equipos donde el
+                                trabajo en conjunto y el buen clima se valoren de verdad.
+                            </p>
+
+                            <p class="mt-2">
+                                Si necesitás a alguien con nuevas ideas que siempre tenga ganas de sumar, contá conmigo.
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap gap-4 mt-8">
+                            <a href="#projects"
+                                class="px-6 py-3 bg-gradient-to-r from-green-400 to-green-600 text-dark rounded-lg hover:from-green-500 hover:to-green-700 hover:scale-105 transform transition-all duration-300 font-medium shadow-lg">
+                                View My Work
+                            </a>
+                            <a href="#contact"
+                                class="px-6 py-3 border border-green text-green rounded-lg hover:bg-green hover:text-dark transition-colors duration-200 font-medium">
+                                Let's Talk
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects" class="relative px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="text-2xl md:text-3xl font-bold text-green mb-4 text-center">Projects</h2>
+
+                <!-- Projects Container -->
+                <div class="projects-container">
+                    <!-- Defiant -->
+                    <div class="project-card card rounded-lg">
+                        <div class="grid">
+                            <div class="bg-gray-900">
+                                <div class="flex justify-center text-gray-400">
+                                    <p>AndinaDefi</p>
+                                </div>
+                            </div>
+                            <div class="p-6 md:p-8 flex flex-col justify-center text-sm">
+                                <h3 class="text-xl md:text-2xl font-bold text-green mb-3">DefiantApp (Flutter)</h3>
+                                <p class="text-gray-300 mb-2">
+                                    Desarrollo y evolución de DefiantApp, billetera Web3 self
+                                    custodial (+15.000 descargas), enfocada en la descentralización y la
+                                    seguridad del usuario.
+                                <p class="text-gray-300 mb-2">Trabajé tanto en la optimización del rendimiento, la
+                                    arquitectura y en la implementación de funcionalidades clave.
+
+                                <ul class="list-disc list-inside mb-1">
+                                    <li class="text-gray-300 mb-1">30+ blockchains: Bitcoin, Ethereum,
+                                        TRON, Avalanche, etc. sus tokens y servicios de swap</li>
+                                    <li class="text-gray-300 mb-1">Pipelines de CI/CD para Android e iOS.</li>
+                                    <li class="text-gray-300 mb-1">BLoC y Riverpod</li>
+                                    <li class="text-gray-300 mb-1">Características como lector QR,
+                                        autenticación biométrica, base de datos local,
+                                        reproducción de video, entre otras.</li>
+                                </ul>
+                                <p class="text-gray-300 mb-2">
+                                    Además, llevé adelante mini proyectos en paralelo y realicé aportes a proyectos
+                                    open
+                                    source en Go, JavaScript y Dart.
+                                </p>
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Flutter</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Dart</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">javascript</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Bitcoin</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Web3</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Firebase</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Sentry</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Go</span>
+
+                                </div>
+                                <div class=" mt-2">
+                                    <a href="https://defiantapp.tech/en"
+                                        class="text-green hover:text-white transition-colors duration-200 flex items-center text-sm">
+                                        View Project
+                                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Locally -->
+                    <div class="project-card card rounded-lg">
+                        <div class="grid">
+                            <div class="bg-gray-900">
+                                <div class="flex justify-center text-gray-400">
+                                    <p>Locally</p>
+                                </div>
+                            </div>
+                            <div class="p-6 md:p-8 flex flex-col justify-center text-sm">
+                                <h3 class="text-xl md:text-2xl font-bold text-green mb-3">Locally app (Flutter)</h3>
+                                <p class="text-gray-300 mb-2">
+                                    Lideré el desarrollo de la app principal en Flutter, enfocándome en rendimiento,
+                                    experiencia de usuario y escalabilidad.
+                                <p class="text-gray-300 mb-2">
+                                    Implementé funcionalidades como carga masiva de datos, mapas interactivos (Leaflet -
+                                    MapBox),
+                                    acceso a cámara y geolocalización.
+                                <p class="text-gray-300 mb-2">
+                                    Lideré la arquitectura e infraestructura de la app, incluyendo CI/CD con Github
+                                    Actions.
+                                <p class="text-gray-300 mb-2">
+                                    Ademas, colaboré con el equipo backend en decisiones de arquitectura y en la
+                                    dockerización de la aplicación, preparando su despliegue en Google Cloud.
+                                </p>
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Flutter</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Dart</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">MapBox (Leaflet)</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Firebase</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Java</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Docker</span>
+
+                                </div>
+                                <div class=" mt-2">
+                                    <a href="https://defiantapp.tech/en"
+                                        class="text-green hover:text-white transition-colors duration-200 flex items-center text-sm">
+                                        View Project
+                                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consensus -->
+                    <div class="project-card card rounded-lg">
+                        <div class="grid">
+                            <div class="bg-gray-900">
+                                <div class="flex justify-center text-gray-400">
+                                    <p>Consensus Group</p>
+                                </div>
+                            </div>
+                            <div class="p-6 md:p-8 flex flex-col justify-center text-sm">
+                                <h3 class="text-xl md:text-2xl font-bold text-green mb-3">Flutter, .NET Core,
+                                    ReactNative</h3>
+                                <p class="text-gray-300 mb-2">
+                                    Trabajé en el mantenimiento y desarrollo de aplicaciones móviles y APIs REST para
+                                    proyectos internos
+                                    de empresas privadas.
+                                <p class="text-gray-300 mb-2">
+                                    En mobile, utilicé Flutter y React Native para implementar funcionalidades clave y
+                                    mejorar el
+                                    rendimiento.
+                                <p class="text-gray-300 mb-2">
+                                    En backend, desarrollé servicios con .NET Core, incluyendo flujos de autenticación
+                                    con OAuth2.
+                                <p class="text-gray-300 mb-2">
+                                    Ademas, participe en la mejora de los servidores y servicios de CI/CD de la empresa
+                                    implementados en TeamCity y GitLab.
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Flutter</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">ReactNative</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">.NET Core</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">GitLab</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">TeamCity</span>
+                                    <span class="tech-tag px-3 py-1 rounded-full text-sm">Docker</span>
+
+                                </div>
+                                <div class=" mt-2">
+                                    <a href="https://defiantapp.tech/en"
+                                        class="text-green hover:text-white transition-colors duration-200 flex items-center text-sm">
+                                        View Project
+                                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tech Stack Section -->
+        <section id="tech" class="relative px-4 sm:px-6 lg:px-8 py-20">
+            <!-- Digital grid background -->
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-green text-center mb-12 tracking-tight"
+                    style="font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;">Tech Stack</h2>
+                <div id="tech-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mb-10 justify-center">
+                    <!-- Flutter -->
+                    <div class="tech-card-neon  cursor-pointer flex flex-col justify-center p-10 rounded-3xl border-2 border-[#196bd4] bg-[#18181b]"
+                        data-tech="flutter" style="--glow-color: #196bd4;">
+                        <div class="neon-glow absolute inset-0 rounded-2xl pointer-events-none"></div>
+                        <img src="https://storage.googleapis.com/cms-storage-bucket/0dbfcc7a59cd1cf16282.png"
+                            alt="Flutter Logo" class="tech-logo mb-0" loading="lazy" />
+                    </div>
+                    <!-- Dart -->
+                    <div class="tech-card-neon cursor-pointer flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-cyan-400 bg-[#18181b] shadow-lg transition-all duration-300 relative overflow-hidden"
+                        data-tech="dart" style="--glow-color: #22d3ee;">
+                        <div class="neon-glow absolute inset-0 rounded-2xl pointer-events-none"></div>
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Dart-logo.png" alt="Dart Logo"
+                            class="tech-logo mb-0" loading="lazy" />
+                    </div>
+                    <!-- Go -->
+                    <div class="tech-card-neon cursor-pointer flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-sky-400 bg-[#18181b] shadow-lg transition-all duration-300 relative overflow-hidden"
+                        data-tech="go" style="--glow-color: #38bdf8;">
+                        <div class="neon-glow absolute inset-0 rounded-2xl pointer-events-none"></div>
+                        <img src="https://go.dev/blog/go-brand/Go-Logo/PNG/Go-Logo_Blue.png" alt="Go Logo"
+                            class="tech-logo mb-0" loading="lazy" />
+                    </div>
+                    <!-- Python -->
+                    <div class="tech-card-neon cursor-pointer flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-yellow-400 bg-[#18181b] shadow-lg transition-all duration-300 relative overflow-hidden"
+                        data-tech="python" style="--glow-color: #facc15;">
+                        <div class="neon-glow absolute inset-0 rounded-2xl pointer-events-none"></div>
+                        <img srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Python.svg/240px-Python.svg.png"
+                            alt="Python Logo" class="tech-logo mb-0" loading="lazy" />
+                    </div>
+                    <!-- JavaScript -->
+                    <div class="tech-card-neon cursor-pointer flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-yellow-300 bg-[#18181b] shadow-lg transition-all duration-300 relative overflow-hidden"
+                        data-tech="js" style="--glow-color: #fde047;">
+                        <div class="neon-glow absolute inset-0 rounded-2xl pointer-events-none"></div>
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6a/JavaScript-logo.png"
+                            alt="JavaScript Logo" class="tech-logo mb-0" loading="lazy" />
+                    </div>
+                    <!-- .NET -->
+                    <div class="tech-card-neon cursor-pointer flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-purple-600 bg-[#18181b] shadow-lg transition-all duration-300 relative overflow-hidden"
+                        data-tech="dotnet" style="--glow-color: #9b33d7;">
+                        <div class="neon-glow absolute inset-0 rounded-2xl pointer-events-none"></div>
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/4/4f/Csharp_Logo.png" alt=".NET Logo"
+                            class="tech-logo mb-0" loading="lazy" />
+                    </div>
+                    <!-- Docker -->
+                    <div class="tech-card-neon cursor-pointer flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-blue-400 bg-[#18181b] shadow-lg transition-all duration-300 relative overflow-hidden"
+                        data-tech="docker" style="--glow-color: #60a5fa;">
+                        <div class="neon-glow absolute inset-0 rounded-2xl pointer-events-none"></div>
+                        <img src="https://www.docker.com/wp-content/uploads/2022/03/Moby-logo.png" alt="Docker Logo"
+                            ading="lazy" />
+                    </div>
+                    <!-- Linux
+                    <div class="tech-card-neon cursor-pointer flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-gray-400 bg-[#18181b] shadow-lg transition-all duration-300 relative overflow-hidden"
+                        data-tech="linux" style="--glow-color: #9ca3af;">
+                        <div class="neon-glow absolute inset-0 rounded-2xl pointer-events-none"></div>
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png" alt="Linux Logo"
+                         </div> -->
+
+
+                    <!-- Git -->
+                    <div class="tech-card-neon cursor-pointer flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-orange-400 bg-[#18181b] shadow-lg transition-all duration-300 relative overflow-hidden"
+                        data-tech="git" style="--glow-color: #fb923c;">
+                        <div class="neon-glow absolute inset-0 rounded-2xl pointer-events-none"></div>
+                        <img src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" alt="Git Logo"
+                            class="tech-logo mb-0" loading="lazy" />
+                    </div>
+                </div>
+                <div id="tech-desc" class="text-center text-green text-m h-[2.5rem] font-mono">
+                    <span>Selecciona una tecnología</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="px-4 sm:px-6 lg:px-8 py-20">
+            <div class="max-w-4xl mx-auto">
+                <div class="card rounded-lg p-6 md:p-8">
+                    <div class="space-y-6">
+                        <h2 class="text-2xl md:text-3xl font-bold text-green mb-6">Get in Touch</h2>
+                        <p class="text-gray-300 leading-relaxed">
+                            ¿Interesado en trabajar juntos en tu próximo proyecto mobile? Conversemos sobre cómo podemos
+                            crear tu proxima aplicación utilizando Flutter.
+                        </p>
+                        <div class="flex flex-wrap gap-4 mt-8">
+
+                            <a href="mailto:quinterosjuanp@gmail.com"
+                                class="px-6 py-2 bg-gray-800 text-green rounded-lg hover:bg-green hover:text-dark transition-colors duration-200 flex items-center gap-2">
+                                <img src="https://cdn-icons-png.flaticon.com/512/3293/3293282.png" alt="Email Logo"
+                                    class="w-5 h-5 filter invert">
+                                Email
+                            </a>
+                            <a href="https://linkedin.com/in/juan-pablo-quinteros"
+                                class="px-6 py-2 bg-gray-800 text-green rounded-lg hover:bg-green hover:text-dark transition-colors duration-200 flex items-center gap-2">
+                                <img src="https://cdn-icons-png.flaticon.com/512/1384/1384014.png" alt="LinkedIn Logo"
+                                    class="w-5 h-5 filter invert">
+
+                                LinkedIn
+                            </a>
+                            <a href="https://github.com/juampiq6"
+                                class="px-6 py-2 bg-gray-800 text-green rounded-lg hover:bg-green hover:text-dark transition-colors duration-200 flex items-center gap-2">
+                                <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="GitHub Logo"
+                                    class="w-5 h-5 filter invert">
+                                GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-1">
+        <div class="max-w-4xl mx-auto text-center">
+            <p class="text-sm">© 2025 Juan Pablo Quinteros. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+</body>
+
+</html>
